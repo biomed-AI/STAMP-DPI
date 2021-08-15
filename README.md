@@ -23,18 +23,24 @@ pip install git+https://github.com.cnpmjs.org/samoturk/mol2vec
 ```
 
 ## Data
-We use the dropbox restore the GalaxyDB and Davis dataset, which include the origianl drug-protein interaction data and calculated protein features.
-The link is https://www.dropbox.com/sh/7maad34abz1knsp/AADfwkvm_Fu65vjtOwo5qcBNa?dl=0
+We use the figshare restore the GalaxyDB and Davis dataset, which include the origianl drug-protein interaction data and calculated protein features. And the license is GPL 3.0+.
+
+The link is:
+
+Davis Dataset: https://doi.org/10.6084/m9.figshare.15169527.v1
+
+GalaxyDB Dataset: https://doi.org/10.6084/m9.figshare.15169530
+
 After download the datasets, we assume that you unzip and place them int directory 'data' in our project.
 
 ## Evaluation from pretrained model.
-We assume you are currently in the X-DPI project folder. If you want to evaluation the performance on our provided testing set, you can run the script named "run_test_v0.sh", such as
+We assume you are currently in the STAMP-DPI project folder. If you want to evaluation the performance on our provided testing set, you can run the script named "run_test_v0.sh", such as
 ```
 sh scripts/run_test_v0.sh
 ```
 
 ## Training and evaluating
-if you want to train the X-DPI Model based on our provided training set, you should run the script named "run_train_v1.sh", such as
+if you want to train the STAMP-DPI Model based on our provided training set, you should run the script named "run_train_v1.sh", such as
 ```
 sh run_train_v1.sh
 ```
@@ -46,5 +52,5 @@ sh run_test_v1.sh
 ## Citation
 If you find this code useful for your research, please use the following citation.
 ```
-Penglei Wang†, Shuangjia Zheng†, Yize Jiang, Chengtao Li, Junhong Liu, Chang Wen, Atanas Patronov, Dahong Qian*, Hongming Chen* and Yuedong Yang*. Structure-aware multi-modal deep learning for drug-protein interactions prediction.
+X-DPI: A structure-aware multi-modal deep learning model for drug-protein interactions prediction. Penglei Wang, Shuangjia Zheng, Yize Jiang, Chengtao Li, Junhong Liu, Chang Wen, Atanas Patronov, Dahong Qian, Hongming Chen, Yuedong Yang. bioRxiv 2021.06.17.448780; doi: https://doi.org/10.1101/2021.06.17.448780
 ```
