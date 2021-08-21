@@ -66,7 +66,7 @@ def run(args: argparse.Namespace):
     elif args.mode == 'test':
         trainer = pl.Trainer(
             default_root_dir='../',
-            gpus='3',
+            gpus=args.gpus,
             resume_from_checkpoint=args.ckpt_path,
         )
         if args.valid_test:
@@ -82,7 +82,7 @@ def parse_args():
     parser.add_argument('--mode', type=str, default='test', help='Running Mode (train / test)')
     parser.add_argument('--ckpt_path',
                         type=str,
-                        default='ckpts/GalaxyDB/final_model/_ckpt_epoch_12.ckpt',
+                        default=None,
                         help='CheckPoint File Path for Test')
     parser.add_argument('--ckpt_save_path', type=str, default='ckpts/debug/', help='CheckPoint File Path for save')
 
@@ -94,11 +94,10 @@ def parse_args():
 
     parser.add_argument('--seed', type=int, default=2020, help='Random Seed')
 
-    parser.add_argument('--gpus', type=int, default=1, help='Number of GPUs')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch Size for Train(Validation/Test)')
+    parser.add_argument('--gpus', type=str, default='0', help='Number of GPUs')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch Size for Train(Validation/Test)')
     parser.add_argument('--max_epochs', type=int, default=50, help='Max Trainning Epochs')
-    parser.add_argument('--max_steps', type=int, help='Max Trainning Steps for Native CPU')
-    parser.add_argument('--num_workers', type=int, default=1, help='Number of Subprocesses for Data Loading')
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of Subprocesses for Data Loading')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning Rate for Trainning')
     parser.add_argument('--early_stop_round', type=int, default=5, help='Early Stopping Round in Validation')
 
@@ -119,13 +118,13 @@ def parse_args():
     parser.add_argument('--protein_dim', type=int, default=64, help='Dimension for Protein')
     parser.add_argument('--atom_dim', type=int, default=34, help='Dimension for Atom')
     parser.add_argument('--embedding_dim', type=int, default=768, help='Dimension for Embedding')
+    parser.add_argument('--pretrained', type=bool, default=False, help='Pretrained model')
 
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     params = parse_args()
-    params.gpus = '4, 5, 6, 7'
     print(params)
     pl.seed_everything(params.seed)
     torch.cuda.manual_seed_all(params.seed)

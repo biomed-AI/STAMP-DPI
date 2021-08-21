@@ -11,6 +11,7 @@
 import os
 
 import numpy as np
+import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torch.nn as nn
@@ -36,6 +37,32 @@ def pearson(y, f):
 def spearman(y, f):
     rs = stats.spearmanr(y, f)[0]
     return rs
+
+
+def ci(y, f):
+    y = np.array(y)
+    f = np.array(f)
+    ind = np.argsort(y)
+    y = y[ind]
+    f = f[ind]
+    i = len(y) - 1
+    j = i - 1
+    z = 0.0
+    S = 0.0
+    while i > 0:
+        while j >= 0:
+            if y[i] > y[j]:
+                z = z + 1
+                u = f[i] - f[j]
+                if u > 0:
+                    S = S + 1
+                elif u == 0:
+                    S = S + 0.5
+            j = j - 1
+        i = i - 1
+        j = i - 1
+    ci = S / z
+    return ci
 
 
 class Predictor(nn.Module):
@@ -308,6 +335,41 @@ class DeepCPIModel(pl.LightningModule):
                 "correct_values": correct_values,
             }
 
+    def target_eval(self, gt_label, pre_label, scores, pros):
+        seqs = set(pros)
+        pros = np.array(pros)
+        auc_t = []
+        acc_t = []
+        recall_t = []
+        precision_t = []
+        f1_score_t = []
+        seq_t = []
+        print('Target Test Results: Evaluate on {} proteins'.format(len(seqs)))
+        for seq in seqs:
+            index = pros == seq
+            gt_label_t = gt_label[index]
+            pre_label_t = pre_label[index]
+            scores_t = scores[index]
+            auc_t.append(roc_auc_score(gt_label_t, scores_t))
+            acc_t.append(accuracy_score(gt_label_t, pre_label_t))
+            recall_t.append(recall_score(gt_label_t, pre_label_t))
+            precision_t.append(precision_score(gt_label_t, pre_label_t))
+            f1_score_t.append(f1_score(gt_label_t, pre_label_t))
+            seq_t.append(seq)
+        auc_t = np.array(auc_t)
+        acc_t = np.array(acc_t)
+        recall_t = np.array(recall_t)
+        precision_t = np.array(precision_t)
+        f1_score_t = np.array(f1_score_t)
+        seq_t = np.array(seq_t)
+        print(" acc: {} (std: {}),".format(round(np.mean(acc_t), 4),
+                                           round(np.std(acc_t),
+                                                 4)), " auc: {}(std: {}),".format(round(np.mean(auc_t), 4),
+                                                                                  round(np.std(auc_t), 4)),
+              " precision: {}(std: {}),".format(round(np.mean(precision_t), 4), round(np.std(precision_t), 4)),
+              " recall: {}(std: {}),".format(round(np.mean(recall_t), 4), round(np.std(recall_t), 4)),
+              " f1_score: {}(std: {})".format(round(np.mean(f1_score_t), 4), round(np.std(f1_score_t), 4)))
+
     def test_epoch_end(self, outputs):
         avg_loss = torch.stack([x["test_loss"] for x in outputs]).mean()
 
@@ -318,6 +380,7 @@ class DeepCPIModel(pl.LightningModule):
                 correct_labels.extend(x["correct_labels"])
                 seqs.extend((x['sequences']))
             auc = roc_auc_score(correct_labels, scores)
+            print(seqs[:10])
             print('auc', auc)
             thres = [0.5]
             for t in thres:
@@ -328,6 +391,7 @@ class DeepCPIModel(pl.LightningModule):
                 precision = precision_score(correct_labels, predict_labels)
                 recall = recall_score(correct_labels, predict_labels)
                 f1 = f1_score(correct_labels, predict_labels)
+                # self.target_eval(np.array(correct_labels), np.array(predict_labels), np.array(scores), seqs)
                 print(
                     " acc: {},".format(acc),
                     " precision: {},".format(precision),
@@ -353,11 +417,15 @@ class DeepCPIModel(pl.LightningModule):
             r2 = r2_score(correct_values, predict_values)
             pr = pearson(predict_values, correct_values)
             sr = spearman(predict_values, correct_values)
+            # data = pd.read_csv(os.path.join(self.root_data_path, "split_data/test.csv"))
+            # data['pred_label'] = predict_values
+            # data.to_csv('evaluate_results.csv', index=False)
             return {
                 "test_loss": avg_loss.item(),
                 "mse": mse,
                 "rmse": rmse,
                 "r2_score": r2,
                 "pearson": pr,
-                "spearman": sr
+                "spearman": sr,
+                'ci': ci(correct_values, predict_values)
             }

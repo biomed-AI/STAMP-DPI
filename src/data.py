@@ -10,7 +10,7 @@
 
 import pandas as pd
 import torch
-from gensim.models import word2vec
+from gensim.models import Word2Vec, word2vec
 from torch.utils.data import DataLoader, Dataset
 
 from preprocessing.compound import get_mol2vec_features, get_mol_features
@@ -25,6 +25,7 @@ class CPIDataset(Dataset):
         protein_feature_manager: 蛋白质特征管理器
     """
     def __init__(self, file_path, protein_feature_manager, args):
+        self.args = args
         self.raw_data = pd.read_csv(file_path)
         self.smiles_values = self.raw_data['COMPOUND_SMILES'].values
         self.sequence_values = self.raw_data['PROTEIN_SEQUENCE'].values
@@ -58,7 +59,7 @@ class CPIDataset(Dataset):
             'PROTEIN_MAP': protein_contact_map,
             'PROTEIN_EMBEDDING': protein_seq_embedding,
             'LABEL': label,
-            'SEQUENCE': sequence
+            'SEQUENCE': sequence,
         }
 
     def collate_fn(self, batch):
@@ -100,6 +101,8 @@ class CPIDataset(Dataset):
             protein_contact_map[i, :v.shape[0], :v.shape[0]] = torch.FloatTensor(v)
             
             v = item['PROTEIN_EMBEDDING']
+            if self.args.pretrained == 1 and self.args.objective == 'classification':
+                v[:, 358] = (v[:, 358] - 7.8) / 6.5
             protein_seq_embedding[i, :v.shape[0], :] = torch.FloatTensor(v)[:max_protein_len, :]
 
             labels.append(item['LABEL'])
